@@ -1,63 +1,161 @@
-<!-- Franky Liu 24673898 -->
 <template>
-  <div class="space-y-8">
-    <div class="flex flex-col md:flex-row gap-8 items-center">
+  <div class="home-container">
+    <div class="profile-section">
       <img 
         src="/image/P1.jpg" 
         alt="Franky Liu" 
-        class="w-32 h-32 md:w-48 md:h-48 rounded-full object-cover border-4 border-white shadow-md"
+        class="profile-image"
       >
-      <div>
-        <h1 class="text-3xl font-bold text-gray-800">Franky Liu</h1>
-        <p class="mt-2 text-gray-600">I'm a second-year UP student studying IKS and I love cats</p>
+      <div class="profile-info">
+        <h1>Franky Liu</h1>
+        <p>I'm a second-year UP student studying IKS and I love cats</p>
       </div>
     </div>
 
-    <!-- Cat API Section -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-xl font-semibold text-gray-800 mb-4">Cat Corner</h2>
-      <div class="grid md:grid-cols-2 gap-6">
-        <div v-if="catImage" class="overflow-hidden rounded-lg">
-          <img 
-            :src="catImage" 
-            alt="Random Cat" 
-            class="w-full h-64 object-cover rounded-lg hover:scale-105 transition-transform"
-          >
+    <div class="cat-section">
+      <h2>Cat Corner</h2>
+      <div class="cat-content">
+        <div v-if="catImage" class="cat-image-container">
+          <img :src="catImage" alt="Random Cat" class="cat-image">
         </div>
-        <div class="flex items-center">
-          <div>
-            <p class="text-lg font-medium text-gray-700 mb-2">Fun fact about cats:</p>
-            <p v-if="catFact" class="text-gray-600 italic">"{{ catFact }}"</p>
-            <p v-else class="text-gray-500">No cat fact available</p>
-          </div>
+        <div class="cat-fact-container">
+          <p class="fact-title">Fun fact about cats:</p>
+          <p v-if="catFact" class="cat-fact">"{{ catFact }}"</p>
+          <p v-else class="loading-message">Loading cat fact...</p>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-// This will run during static generation
-const { data: catData } = await useAsyncData('cats', async () => {
-  try {
-    const [imageResponse, factResponse] = await Promise.all([
-      $fetch("https://api.thecatapi.com/v1/images/search"),
-      $fetch("https://meowfacts.herokuapp.com/")
-    ]);
-    
-    return {
-      catImage: imageResponse[0]?.url,
-      catFact: factResponse?.data?.[0] || "Cats are awesome!"
-    };
-  } catch (error) {
-    console.error("Error fetching cat data:", error);
+<script>
+export default {
+  data() {
     return {
       catImage: null,
-      catFact: "Couldn't load cat facts right now"
+      catFact: null,
     };
-  }
-});
-
-const catImage = ref(catData.value?.catImage);
-const catFact = ref(catData.value?.catFact);
+  },
+  async mounted() {
+    try {
+      const [imageResponse, factResponse] = await Promise.all([
+        fetch("https://api.thecatapi.com/v1/images/search"),
+        fetch("https://meowfacts.herokuapp.com/")
+      ]);
+      
+      const [imageData, factData] = await Promise.all([
+        imageResponse.json(),
+        factResponse.json()
+      ]);
+      
+      this.catImage = imageData[0].url;
+      this.catFact = factData.data[0];
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  },
+};
 </script>
+
+<style>
+.home-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .profile-section {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.profile-info h1 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.profile-info p {
+  color: #666;
+}
+
+.cat-section {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.cat-section h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.cat-content {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .cat-content {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cat-image-container {
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.cat-image {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.cat-image:hover {
+  transform: scale(1.05);
+}
+
+.cat-fact-container {
+  display: flex;
+  align-items: center;
+}
+
+.fact-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 0.5rem;
+}
+
+.cat-fact {
+  color: #666;
+  font-style: italic;
+}
+
+.loading-message {
+  color: #888;
+}
+</style>
